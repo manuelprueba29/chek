@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Chequeo</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    <!-- jQuery UI -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Configurar el selector de fecha
+            $(".fecha-manual").datepicker({
+                dateFormat: 'yy-mm-dd', // Formato de la fecha
+                changeMonth: true,
+                changeYear: true
+            });
+
+            // Establecer la fecha actual en el campo de fecha
+            var currentDate = $.datepicker.formatDate('yy-mm-dd', new Date());
+            $(".fecha-manual").val(currentDate);
+
+            // Obtener el botón por su ID
+            var botonEnviar = $("#botonEnviar");
+
+            // Agregar un evento clic al botón
+            botonEnviar.on("click", function () {
+                // Enviar manualmente el formulario cuando se hace clic en el botón
+                $("#miFormulario").submit();
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <h1 class="text-center mt-5 mb-5 text-primary">LISTA DE CHEQUEO</h1>
+    <div class="container">
+        <div class="card shadow">
+            <div class="card-body">
+                <form id="formularioPrincipal" action="{{ url_for('home') }}" method="POST">
+                    <div class="row mb-3">
+                        <div class="col d-flex align-items-end">
+                            <select style="width: 300px;" class="form-control form-control-sm mb-3" name="opcion">
+                                <option value=" ">Seleccione una opcion</option>
+                                <option value="acuario">acuario</option>
+                                <option value="musica">musica</option>
+                                <option value="mente">mente</option>
+                                <option value="vivario">vivario</option>
+                                <option value="infantil">infantil</option>
+                                <option value="tiempo">tiempo</option>
+                                <option value="escena">escena</option>
+                                <option value="taquilla">taquilla</option>
+                            </select>
+                            <button class="btn btn-primary mb-3 mt-4 ms-2" type="submit">Mostrar información</button>
+                        </div>
+                    </div>
+                </form>
+                <!-- Tabla -->
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th scope="col">Activo</th>
+                            <th scope="col">Sala</th>
+                            <th scope="col">Experiencia</th>
+                            <th scope="col">Fecha</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col">Comentario</th>
+                           <!-- <th scope="col">Edit</th>-->
+                           <!--  <th scope="col">Delete</th>-->
+                        </tr>
+                    </thead>
+                    <form id="miFormulario" action="{{ url_for('addUser') }}" method="POST">
+                        <tbody>
+                            {% if data %}
+                                {% for row in data %}                        
+                                    <tr>                   
+                                        <td>{{ row[0] if row[0] is defined else '' }}</td>
+                                        <td>{{ row[1] if row[1] is defined else '' }}</td>
+                                        <td>{{ row[2] if row[2] is defined else '' }}</td>
+
+                                        <!-- Campos ocultos para almacenar valores -->
+                                        <input type="hidden" name="Activo[]" value="{{ row[0] }}">
+                                        <input type="hidden" name="NombreSala[]" value="{{ row[1] }}">
+                                        <input type="hidden" name="NombreExperiencia[]" value="{{ row[2] }}">
+                    
+                                        <td>
+                                            <input type="text" class="form-control mb-3 fecha-manual" name="Fecha[]">
+                                        </td>
+                                        <td>
+                                            <!-- Ingresar manualmente la información de estado -->
+                                            <select style="width: 150px;" class="form-control form-control-sm mb-3" name="Estado[]">
+                                                <option value="BUENA">Buena</option>
+                                                <option value="REPARADA">Reparada</option>
+                                                <option value="DESHABILITADA">Deshabilitada</option>
+                                            </select>
+                                        </td>
+                    
+                                        <td>
+                                            <!-- Ingresar manualmente la información de comentario -->
+                                            <label for="comentario_manual"></label>
+                                            <textarea id="comentario_manual" name="Comentario[]" style="height: 50px;"></textarea>
+                                        </td>  
+                                    </tr>
+ 
+                                {% endfor %}
+                            {% endif %}                                                 
+                        </tbody>                      
+                    </form>                   
+                </table>
+                <!-- Botón de enviar -->
+                <button id="botonEnviar" class="btn btn-success" type="button">Enviar</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
