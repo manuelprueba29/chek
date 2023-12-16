@@ -7,10 +7,10 @@ template_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 template_dir = os.path.join(template_dir, 'src', 'templates')
 
 app = Flask(__name__, template_folder = template_dir)
-app.secret_key = '123'
+app.secret_key = 'Chek!Q988'
 
 @app.route('/')
-def home():
+def home1():
     cursor = db.database.cursor()
     cursor.execute("SELECT * FROM experiencias")
     myresult = cursor.fetchall()
@@ -24,8 +24,8 @@ def home():
 
 
 #Ruta para guardar usuarios en la bdd
-@app.route('/user', methods=['POST'])
-def addUser():
+@app.route('/user1', methods=['POST'])
+def addUser1():
     Activo = request.form['Activo']
     NombreSala = request.form['NombreSala']
     NombreExperiencia = request.form['NombreExperiencia']
@@ -43,22 +43,21 @@ def addUser():
             warning_message = f"Advertencia: El activo {Activo} ya está registrado. Ingrese un activo unico"
             flash(warning_message, 'warning')  # Almacena el mensaje en la sesión con la categoría 'warning'
 
-    return redirect(url_for('home'))
+    return redirect(url_for('home1'))
 
     
-
-@app.route('/delete/<string:Activo>')
-def delete(Activo):
+@app.route('/delete1/<string:Activo>')
+def delete1(Activo):
     cursor = db.database.cursor()
     sql = "DELETE FROM experiencias WHERE Activo=%s"
     data = (Activo,)
     cursor.execute(sql, data)
     db.database.commit()
-    return redirect(url_for('home'))
+    return redirect(url_for('home1'))
 
-@app.route('/edit/<string:Activo>', methods=['POST'])
+@app.route('/edit1/<string:Activo>', methods=['POST'])
 
-def edit(Activo):
+def edit1(Activo):
     Activo = request.form['Activo']
     NombreSala = request.form['NombreSala']
     NombreExperiencia = request.form['NombreExperiencia']
@@ -70,8 +69,41 @@ def edit(Activo):
         data = (Activo, NombreSala, NombreExperiencia, Activo)
         cursor.execute(sql, data)
         db.database.commit()
-    return redirect(url_for('home'))
+    return redirect(url_for('home1'))
+
+
+@app.route('/mostrarchek', methods=['GET', 'POST'])
+
+def mostrar1():
+
+    fecha_elegida=None
+   
+    if request.method=='POST':
+        fecha_elegida=request.form['Fecha']
+
+        if fecha_elegida:
+
+            cursor=db.database.cursor()
+
+            #Obtener la información de la tabla cheklist para la fecha y todas las salas
+            print("probando1")
+            sql_cheklist="""
+                SELECT Activo, NombreSala, fecha, NombreExperiencia, Estado, Comentario
+                FROM cheklist
+                WHERE DATE(fecha) = %s AND NombreSala IN ('escena', 'mente', 'tiempo', 'musica', 'vivario', 'infantil')
+                ORDER BY FIELD(NombreSala, 'escena', 'mente', 'tiempo', 'musica', 'vivario', 'infantil')
+            """
+            print("probando2")
+            cursor.execute(sql_cheklist,(fecha_elegida,))
+            print("probando3")
+            cheklist_date=cursor.fetchall()
+            print("probando4")
+
+            cursor.close()
+            return render_template('mostrarchek.html', data=cheklist_date, sala='')
+
+    return render_template('mostrarchek.html', fecha_elegida=fecha_elegida)
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=4000)
+    app.run(debug=True, port=5000)
