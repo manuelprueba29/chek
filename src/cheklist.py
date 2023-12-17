@@ -15,7 +15,6 @@ def obtener_datos():
     cursor.close()
     return data
 
-
 @app.route('/', methods=['GET', 'POST'])
 def home():
     
@@ -47,24 +46,32 @@ def addUser():
     Comentarios = request.form.getlist('Comentario[]')
     
     for Activo, NombreSala, NombreExperiencia, Fecha, Estado, Comentario in zip(Activos, NombreSalas, NombreExperiencias, Fechas, Estados, Comentarios):
-
-        print(Activo, NombreSala, NombreExperiencia, Fecha, Estado, Comentario)
         cursor = db.database.cursor()
 
-        # Insertar datos en la tabla cheklist
-        sql_cheklist = "INSERT INTO cheklist (Activo, NombreSala, Fecha, NombreExperiencia, Estado, Comentario) VALUES (%s, %s, %s, %s, %s, %s)"
-        data_cheklist = (Activo, NombreSala, Fecha, NombreExperiencia, Estado, Comentario)
+        # Verificar si el activo ya realizó un checklist para la misma fecha y sala
+        sql_verificacion_activo = "SELECT * FROM cheklist WHERE Activo = %s AND Fecha = %s AND NombreSala = %s"
+        data_verificacion_activo = (Activo, Fecha, NombreSala)
+        cursor.execute(sql_verificacion_activo, data_verificacion_activo)
+        resultado_verificacion_activo = cursor.fetchone()
 
-        try:
-            cursor.execute(sql_cheklist, data_cheklist)
-            db.database.commit()
-        except IntegrityError as e:
-            db.database.rollback()
-            warning_message = f"Advertencia: El activo {Activo} ya está registrado. Ingrese un activo único."
-            flash(warning_message, 'warning')
-        finally:
-            cursor.close()
+        if resultado_verificacion_activo:
+            # El activo ya realizó un checklist para la misma fecha y sala
+            flash(f"Advertencia: El activo {Activo} ya realizó un checklist para la sala {NombreSala} en la fecha {Fecha}.", 'warning')
+        else:
 
+             # Insertar datos en la tabla cheklist
+            sql_cheklist = "INSERT INTO cheklist (Activo, NombreSala, Fecha, NombreExperiencia, Estado, Comentario) VALUES (%s, %s, %s, %s, %s, %s)"
+            data_cheklist = (Activo, NombreSala, Fecha, NombreExperiencia, Estado, Comentario)
+
+            try:
+                cursor.execute(sql_cheklist, data_cheklist)
+                db.database.commit()
+            except IntegrityError as e:
+                db.database.rollback()
+                warning_message = f"Advertencia: El activo {Activo} ya está registrado. Ingrese un activo único."
+                flash(warning_message, 'warning')
+            finally:
+                cursor.close()
     return redirect(url_for('home'))
 
 if __name__ == '__main__':

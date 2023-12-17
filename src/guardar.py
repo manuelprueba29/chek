@@ -90,8 +90,8 @@ def mostrar1():
             sql_cheklist="""
                 SELECT Activo, NombreSala, fecha, NombreExperiencia, Estado, Comentario
                 FROM cheklist
-                WHERE DATE(fecha) = %s AND NombreSala IN ('escena', 'mente', 'tiempo', 'musica', 'vivario', 'infantil')
-                ORDER BY FIELD(NombreSala, 'escena', 'mente', 'tiempo', 'musica', 'vivario', 'infantil')
+                WHERE DATE(fecha) = %s AND NombreSala IN ('escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil','Taquilla parque', 'Planetario', 'Taquilla planetario', 'Correos experiencias')
+                ORDER BY FIELD(NombreSala, 'escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil','Taquilla parque', 'Planetario', 'Taquilla planetario', 'Correos experiencias')
             """
             print("probando2")
             cursor.execute(sql_cheklist,(fecha_elegida,))
