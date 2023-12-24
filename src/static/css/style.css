@@ -1,0 +1,15 @@
+/* Reglas CSS para los diferentes estados */
+.estado-buena {
+    background-color: #4CAF50 !important; /* Verde */
+    color: rgb(12, 12, 12) !important;
+}
+
+.estado-reparada {
+    background-color: #FFA500 !important; /* Naranja */
+    color: rgb(8, 8, 8) !important;
+}
+
+.estado-deshabilitada {
+    background-color: #fc0606dd !important; /* Rojo */
+    color: rgb(12, 12, 12) !important;
+}

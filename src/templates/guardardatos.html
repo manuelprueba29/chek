@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,30 +16,7 @@
     <!-- jQuery UI -->
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-
-    <script>
-        $(document).ready(function () {
-            // Configurar el selector de fecha
-            $(".fecha-manual").datepicker({
-                dateFormat: 'yy-mm-dd', // Formato de la fecha
-                changeMonth: true,
-                changeYear: true
-            });
-
-            // Establecer la fecha actual en el campo de fecha
-            var currentDate = $.datepicker.formatDate('yy-mm-dd', new Date());
-            $(".fecha-manual").val(currentDate);
-
-            // Obtener el botón por su ID
-            var botonEnviar = $("#botonEnviar");
-
-            // Agregar un evento clic al botón
-            botonEnviar.on("click", function () {
-                // Enviar manualmente el formulario cuando se hace clic en el botón
-                $("#miFormulario").submit();
-            });
-        });
-    </script>
+    
 </head>
 
 <body>
@@ -55,13 +33,20 @@
                                 <option value="musica">musica</option>
                                 <option value="mente">mente</option>
                                 <option value="vivario">vivario</option>
-                                <option value="infantil">infantil</option>
+                                <option value="infantil">sala infantil</option>
                                 <option value="tiempo">tiempo</option>
                                 <option value="escena">escena</option>
-                                <option value="taquilla">taquilla</option>
+                                <option value="taquilla">taquilla parque</option>
+                                <option value="taquilla">planetario</option>
+                                <option value="taquilla">taquilla planetario</option>
+                                <option value="taquilla">correos de experiencia</option>
                             </select>
                             <button class="btn btn-primary mb-3 mt-4 ms-2" type="submit">Mostrar información</button>
+                            <button id="botonRedireccionar" class="btn btn-primary mb-3 mt-4 ms-2" type="button">Volver al menu</button>
+                            
+
                         </div>
+                        
                     </div>
                 </form>
                 <!-- Tabla -->
@@ -78,7 +63,7 @@
                            <!--  <th scope="col">Delete</th>-->
                         </tr>
                     </thead>
-                    <form id="miFormulario" action="{{ url_for('addUser') }}" method="POST">
+                    <form id="miFormularioTabla" action="{{ url_for('addUser') }}" method="POST">
                         <tbody>
                             {% if data %}
                                 {% for row in data %}                        
@@ -121,6 +106,41 @@
             </div>
         </div>
     </div>
+
+    <script>
+        $(document).ready(function () {
+            // Configurar el selector de fecha
+            $(".fecha-manual").datepicker({
+                dateFormat: 'yy-mm-dd', // Formato de la fecha
+                changeMonth: true,
+                changeYear: true
+            });
+
+            // Establecer la fecha actual en el campo de fecha
+            var currentDate = $.datepicker.formatDate('yy-mm-dd', new Date());
+            $(".fecha-manual").val(currentDate);
+
+            // Obtener el botón por su ID
+            var botonEnviar = $("#botonEnviar");
+
+            // Agregar un evento clic al botón
+            botonEnviar.on("click", function () {
+                // Enviar manualmente el formulario cuando se hace clic en el botón
+                $("#miFormularioTabla").submit();
+            });
+
+            // Obtener el botón de redirección por su ID
+            var botonRedireccionar = $("#botonRedireccionar");
+
+        // Agregar un evento clic al botón de redirección
+            botonRedireccionar.on("click", function () {
+            // Redirigir a la URL deseada
+                window.location.href = "http://localhost:5000/";
+            });
+
+        });
+    </script>
+
 </body>
 
 </html>

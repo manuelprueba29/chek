@@ -9,6 +9,8 @@ template_dir = os.path.join(template_dir, 'src', 'templates')
 app = Flask(__name__, template_folder = template_dir)
 app.secret_key = 'Chek!Q988'
 
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
 @app.route('/')
 def home1():
     cursor = db.database.cursor()
@@ -86,21 +88,31 @@ def mostrar1():
             cursor=db.database.cursor()
 
             #Obtener la información de la tabla cheklist para la fecha y todas las salas
-            print("probando1")
+           
             sql_cheklist="""
                 SELECT Activo, NombreSala, fecha, NombreExperiencia, Estado, Comentario
                 FROM cheklist
                 WHERE DATE(fecha) = %s AND NombreSala IN ('escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil','Taquilla parque', 'Planetario', 'Taquilla planetario', 'Correos experiencias')
                 ORDER BY FIELD(NombreSala, 'escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil','Taquilla parque', 'Planetario', 'Taquilla planetario', 'Correos experiencias')
             """
-            print("probando2")
-            cursor.execute(sql_cheklist,(fecha_elegida,))
-            print("probando3")
-            cheklist_date=cursor.fetchall()
-            print("probando4")
+            
 
-            cursor.close()
-            return render_template('mostrarchek.html', data=cheklist_date, sala='')
+            try:
+
+                cursor.execute(sql_cheklist,(fecha_elegida,))
+                cheklist_date=cursor.fetchall()
+                db.database.commit()  # Hacer commit para guardar los cambios
+                
+
+            except Exception as e:
+        
+                print(f"Error al ejecutar la consulta: {e}")
+                cheklist_date = []
+                db.database.rollback()  # Hacer rollback en caso de error
+
+            finally:
+                cursor.close()
+                return render_template('mostrarchek.html', data=cheklist_date, sala='')
 
     return render_template('mostrarchek.html', fecha_elegida=fecha_elegida)
 

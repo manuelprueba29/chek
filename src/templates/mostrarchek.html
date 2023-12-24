@@ -12,20 +12,13 @@
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
     <!-- jQuery UI -->
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
-    <script>
-        $(document).ready(function () {
-            // Configurar el selector de fecha
-            $(".fecha-manual").datepicker({
-                dateFormat: 'yy-mm-dd', // Formato de la fecha
-                changeMonth: true,
-                changeYear: true
-            });         
-        });
-    </script>
+    
 </head>
 
 <body>
@@ -36,11 +29,13 @@
                 <form id="formulariofecha" action="{{ url_for('mostrar1') }}" method="POST">
                     <div class="row mb-3">
                         <div class="col d-flex align-items-end">
-                            <input type="text" class="form-control mb-3 fecha-manual" name="Fecha" placeholder="yy-mm-dd">
-                            <button class="btn btn-primary mb-3 mt-4 ms-2" type="submit">Mostrar información</button>
-                        </div>
+                            <input type="text" class="form-control mb-3 fecha-manual" name="Fecha" placeholder="yy-mm-dd" autocomplete="off">
+                            <button class="btn btn-primary mb-3 mt-4 ms-2" type="submit">Mostrar información</button>                     
                     </div>
                 </form>
+
+                
+                
                 
                 <!-- Tabla -->
                 <table class="table table-bordered">
@@ -62,7 +57,11 @@
                                     <td>{{ row[0] if row[0] is defined else '' }}</td>
                                     <td>{{ row[1] if row[1] is defined else '' }}</td>
                                     <td>{{ row[3] if row[3] is defined else '' }}</td>
-                                    <td>{{ row[4] if row[4] is defined else '' }}</td>
+
+                                    <td class="{% if row[4] == 'BUENA' %}estado-buena{% elif row[4] == 'REPARADA' %}estado-reparada{% elif row[4] == 'DESHABILITADA' %}estado-deshabilitada{% endif %}">
+                                        {{ row[4] if row[4] is defined else '' }}
+                                    </td>
+
                                     <td>{{ row[5] if row[5] is defined else '' }}</td>
                                 </tr>
                                  <!-- Agrega declaraciones de impresión o depuración -->
@@ -76,12 +75,29 @@
                                 <td colspan="6">No hay datos disponibles</td>
                             </tr>
                         {% endif %}
-                    </tbody>                                         
+                    </tbody> 
+                                                          
                 </table>
+
+                <div class="row">
+                    <div class="col">
+                        <a href="http://localhost:5000/" class="btn btn-secondary">Volver al menú</a>
+                    </div>
+                </div> 
             </div>
         </div>
     </div>
     <!-- ... (Tus scripts al final del body) ... -->
+    <script>
+        $(document).ready(function () {
+            // Configurar el selector de fecha
+            $(".fecha-manual").datepicker({
+                dateFormat: 'yy-mm-dd', // Formato de la fecha
+                changeMonth: true,
+                changeYear: true
+            });         
+        });
+    </script>
 </body>
 
 </html>
