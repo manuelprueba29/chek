@@ -29,22 +29,21 @@
                         <div class="col d-flex align-items-end">
                             <select style="width: 300px;" class="form-control form-control-sm mb-3" name="opcion">
                                 <option value=" ">Seleccione una opcion</option>
-                                <option value="acuario">acuario</option>
-                                <option value="musica">musica</option>
-                                <option value="mente">mente</option>
-                                <option value="vivario">vivario</option>
-                                <option value="infantil">sala infantil</option>
-                                <option value="tiempo">tiempo</option>
-                                <option value="escena">escena</option>
-                                <option value="taquilla">taquilla parque</option>
-                                <option value="taquilla">planetario</option>
-                                <option value="taquilla">taquilla planetario</option>
-                                <option value="taquilla">correos de experiencia</option>
+                                <option value="Acuario">Acuario</option>
+                                <option value="Musica">Musica</option>
+                                <option value="Mente">Mente</option>
+                                <option value="Vivario">Vivario</option>
+                                <option value="Sala Infantil">Sala Infantil</option>
+                                <option value="Tiempo">Tiempo</option>
+                                <option value="Escena">Escena</option>
+                                <option value="Taquilla Parque">Taquilla Parque</option>
+                                <option value="Taquilla Planetario">Taquila Planetario</option>
+                                <option value="Correo Experiencias">Correos de Experiencias</option>
                             </select>
                             <button class="btn btn-primary mb-3 mt-4 ms-2" type="submit">Mostrar información</button>
-                            <button id="botonRedireccionar" class="btn btn-primary mb-3 mt-4 ms-2" type="button">Volver al menu</button>
-                            
-
+                            <div class="d-flex">
+                                <a href="http://10.1.4.49:5000"class="btn btn-primary mb-3 mt-4 ms-2">Volver al menu</a>
+                            </div>
                         </div>
                         
                     </div>
@@ -130,13 +129,13 @@
             });
 
             // Obtener el botón de redirección por su ID
-            var botonRedireccionar = $("#botonRedireccionar");
+            //var botonRedireccionar = $("#botonRedireccionar");
 
         // Agregar un evento clic al botón de redirección
-            botonRedireccionar.on("click", function () {
+            //botonRedireccionar.on("click", function () {
             // Redirigir a la URL deseada
-                window.location.href = "http://localhost:5000/";
-            });
+             //   window.location.href = "http://localhost:5000/";
+            //});
 
         });
     </script>

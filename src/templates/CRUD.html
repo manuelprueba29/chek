@@ -37,14 +37,16 @@
                             <div class="form-group">
                                 <label for="sala">Sala:</label>
                                 <select name="NombreSala" id="sala" class="form-control mb-3">
-                                    <option value="acuario">Acuario</option>
-                                    <option value="musica">Musica</option>
-                                    <option value="mente">Mente</option>
-                                    <option value="vivario">Vivario</option>
-                                    <option value="infantil">Infantil</option>
-                                    <option value="tiempo">Tiempo</option>
-                                    <option value="escena">Escena</option>
-                                    <option value="taquilla">Taquilla</option>
+                                    <option value="Acuario">Acuario</option>
+                                    <option value="Musica">Musica</option>
+                                    <option value="Mente">Mente</option>
+                                    <option value="Vivario">Vivario</option>
+                                    <option value="Sala Infantil">Infantil</option>
+                                    <option value="Tiempo">Tiempo</option>
+                                    <option value="Escena">Escena</option>
+                                    <option value="Taquilla Parque">Taquilla Parque</option>
+                                    <option value="Taquilla Planetario">Taquilla Planetario</option>
+                                    <option value="Correo Experiencias">Correo Experiencias</option>
                                 </select>
                             </div>
                         </div>
@@ -57,7 +59,7 @@
                             <button class="btn btn-primary mb-3 mt-4 btn-block" type="submit">GUARDAR</button>
 
                             <div class="d-flex">
-                                <a href="http://localhost:4000/" class="btn btn-secondary flex-grow-1">CHECKLIST</a>
+                                <a href="{{ url_for('home') }}" class="btn btn-secondary flex-grow-1">CHECKLIST</a>
                                 <a href="{{ url_for('mostrar1') }}" class="btn btn-secondary flex-grow-1">MOSTRAR</a>
                             </div>
 
