@@ -6,19 +6,20 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de Chequeo</title>
-    
+
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <!-- jQuery UI -->
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
-    
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
@@ -30,13 +31,11 @@
                     <div class="row mb-3">
                         <div class="col d-flex align-items-end">
                             <input type="text" class="form-control mb-3 fecha-manual" name="Fecha" placeholder="yy-mm-dd" autocomplete="off">
-                            <button class="btn btn-primary mb-3 mt-4 ms-2" type="submit">Mostrar información</button>                     
+                            <button class="btn btn-primary mb-3 mt-4 ms-2" type="submit">Mostrar información</button>
+                        </div>
                     </div>
                 </form>
 
-                
-                
-                
                 <!-- Tabla -->
                 <table class="table table-bordered">
                     <thead>
@@ -64,30 +63,29 @@
 
                                     <td>{{ row[5] if row[5] is defined else '' }}</td>
                                 </tr>
-                                 <!-- Agrega declaraciones de impresión o depuración -->
+                                <!-- Agrega declaraciones de impresión o depuración -->
                                 <script>
                                     console.log('Contenido de row:', {{ row|tojson|safe }});
                                 </script>
-
                             {% endfor %}
                         {% else %}
                             <tr>
                                 <td colspan="6">No hay datos disponibles</td>
                             </tr>
                         {% endif %}
-                    </tbody> 
-                                                          
+                    </tbody>
                 </table>
 
                 <div class="row">
                     <div class="col">
-                        <a href="http://10.1.4.49:5000" class="btn btn-secondary flex-grow-1">Volver al menu</a>
+                        <a href="http://10.1.4.49:5000" class="btn btn-secondary flex-grow-1">Volver al menú</a>
+                        <button id="exportButton" class="btn btn-secondary flex-grow-1" onclick="abrirCalendario()">Exportar informe</button>
                     </div>
-                </div> 
+                </div>
             </div>
         </div>
     </div>
-    <!-- ... (Tus scripts al final del body) ... -->
+    <!-- Tus scripts al final del body -->
     <script>
         $(document).ready(function () {
             // Configurar el selector de fecha
@@ -95,7 +93,37 @@
                 dateFormat: 'yy-mm-dd', // Formato de la fecha
                 changeMonth: true,
                 changeYear: true
-            });         
+            });
+
+            // Función para abrir el calendario y redirigir a la ruta de exportación
+            function abrirCalendario() {
+                // Solicitar al usuario que seleccione la fecha inicial
+                var fechaInicial = prompt("Selecciona la fecha inicial (YY-MM-DD):");
+
+                // Solicitar al usuario que seleccione la fecha final
+                var fechaFinal = prompt("Seleccione la fecha final (YY-MM-DD)");
+
+                // Verifica si ambas fechas se ingresaron y realiza la acción de exportación
+                if (fechaInicial && fechaFinal) {
+                    // Validación de formato de fechas
+                    var formatoFecha = /^\d{4}-\d{2}-\d{2}$/;
+                    if (!formatoFecha.test(fechaInicial) || !formatoFecha.test(fechaFinal)) {
+                        alert("Formato de fecha incorrecto. Utiliza el formato YY-MM-DD.");
+                        return;
+                    }
+
+                    // Redirige a la URL que maneja la exportación o realiza la acción que necesites
+                    window.location.href = `/exportar?fecha_inicial=${fechaInicial}&fecha_final=${fechaFinal}`;
+                } else {
+                    // Manejo de caso en el que el usuario no proporciona ambas fechas
+                    alert("Debes seleccionar ambas fechas para exportar.");
+                }
+            }
+
+            // Asocia la función abrirCalendario al evento click del botón con el id exportButton
+            $("#exportButton").on("click", function () {
+                abrirCalendario();
+            });
         });
     </script>
 </body>
