@@ -103,12 +103,12 @@ def mostrar1():
             cursor=db.database.cursor()
 
             #Obtener la información de la tabla cheklist para la fecha y todas las salas
-           
+          
             sql_cheklist="""
                 SELECT Activo, NombreSala, fecha, NombreExperiencia, Estado, Comentario
                 FROM cheklist
-                WHERE DATE(fecha) = %s AND NombreSala IN ('escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil','Taquilla Parque', 'Planetario', 'Taquilla Planetario', 'Correos experiencias')
-                ORDER BY FIELD(NombreSala, 'escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil','Taquilla Parque', 'Planetario', 'Taquilla Planetario', 'Correos experiencias')
+                WHERE DATE(fecha) = %s AND NombreSala IN ('escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil','Taquilla Parque', 'Planetario 1 nivel', 'Planetario 2 nivel', 'Planetario 3 nivel', 'Taquilla Planetario', 'Correos Experiencias')
+                ORDER BY FIELD(NombreSala, 'escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil','Taquilla Parque', 'Planetario 1 nivel','Planetario 2 nivel','Planetario 3 nivel','Taquilla Planetario', 'Correos Experiencias')
             """          
             try:
                 cursor.execute(sql_cheklist,(fecha_elegida,))
@@ -132,9 +132,7 @@ def obtener_cheklist_data(fecha_inicial, fecha_final):
     try:
         # Obtener una nueva conexión a la base de datos
         connection = db.database
-        print(connection)
-        
-
+       
         if connection is None:
             raise Exception("La conexión a la base de datos es nulaaaa.")
 
@@ -144,15 +142,14 @@ def obtener_cheklist_data(fecha_inicial, fecha_final):
         sql_cheklist = """
             SELECT Activo, NombreSala, fecha, NombreExperiencia, Estado, Comentario
             FROM cheklist
-            WHERE DATE(fecha) BETWEEN %s AND %s AND NombreSala IN ('escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil','Taquilla Parque', 'Planetario', 'Taquilla Planetario', 'Correos experiencias')
-            ORDER BY FIELD(NombreSala, 'escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil','Taquilla Parque', 'Planetario', 'Taquilla Planetario', 'Correos experiencias')
+            WHERE DATE(fecha) BETWEEN %s AND %s AND NombreSala IN ('escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil', 'Taquilla Parque', 'Planetario 1 nivel', 'Planetario 2 nivel', 'Planetario 3 nivel', 'Taquilla Planetario', 'Correos Experiencias')
+            ORDER BY FIELD(NombreSala, 'escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil', 'Taquilla Parque', 'Planetario 1 nivel', 'Planetario 2 nivel', 'Planetario 3 nivel', 'Taquilla Planetario', 'Correos Experiencias')
         """
 
         try:
             cursor.execute(sql_cheklist, (fecha_inicial, fecha_final))
             cheklist_date = cursor.fetchall()
             connection.commit()
-            print(cheklist_date)
         except Exception as e:
             print(f"Error al ejecutar la consulta: {e}")
             connection.rollback()
@@ -168,14 +165,10 @@ def obtener_cheklist_data(fecha_inicial, fecha_final):
 
 
 
-
 @app.route('/exportar', methods=['GET'])
 def exportar():
     fecha_inicial = request.args.get('fecha_inicial')
     fecha_final = request.args.get('fecha_final')
-
-    # Imprime un mensaje para verificar que la ruta se está llamando correctamente
-    print("Ruta '/exportar' llamada si esta entrando.")
 
     # Lógica para generar el informe PDF (sustituye esto con tu propia lógica)
     pdf_content = generar_pdf(fecha_inicial, fecha_final)
@@ -184,7 +177,6 @@ def exportar():
     buffer = BytesIO(pdf_content)
 
     # Imprime un mensaje para verificar que la ruta se está llamando correctamente
-    print("Ruta '/exportar' llamada.")
 
     # Enviar el archivo al navegador para su descarga
     return send_file(buffer, download_name='Informe_Checklist.pdf', as_attachment=True)
@@ -213,7 +205,7 @@ def generar_pdf(fecha_inicial, fecha_final):
                                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                                ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
     
-    print(table)
+
     # Añadir la tabla al documento
     doc.build([Paragraph('INFORME CHECKLIST', style), Paragraph('', style), table])
 
@@ -222,7 +214,6 @@ def generar_pdf(fecha_inicial, fecha_final):
 
     buffer.seek(0)
     pdf_content = buffer.getvalue()
-    print(pdf_content)
     return pdf_content
 
 
