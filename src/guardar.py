@@ -10,6 +10,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from io import BytesIO
 import database as db
 
+
 template_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 template_dir = os.path.join(template_dir, 'src', 'templates')
 
@@ -21,34 +22,45 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 # -------------------------------------------------------------------------------------------------------
 # Rutas para la primera aplicación (home1)
 # -------------------------------------------------------------------------------------------------------
+
 def obtener_conexion():
     return db.database
 
-@app.route('/')
-def home1():
-
+@app.route('/', methods=['GET', 'POST'])
+def home(): 
     try:
-        connection=obtener_conexion()
+        # Obtener una nueva conexión a la base de datos
+        connection = obtener_conexion()
 
         # Verificar si la conexión está cerrada y, en ese caso, reconectar
         if not connection.is_connected():
             connection.reconnect()
 
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM experiencias")
-            myresult = cursor.fetchall()  
+        if request.method == 'POST':
+            if 'opcion' in request.form:
+                opcion_seleccionada = request.form['opcion']
 
-        # Convertir los datos a diccionario
-            insertObject = []
-            columnNames = [column[0] for column in cursor.description]
-            for record in myresult:
-                insertObject.append(dict(zip(columnNames, record)))
+                # Obtener la información de la tabla "experiencias" para la opción seleccionada
+                with connection.cursor() as cursor:
+                    sql = "SELECT Activo, NombreSala, NombreExperiencia FROM experiencias WHERE NombreSala = %s"
+                    cursor.execute(sql, (opcion_seleccionada,))
+                    experiencias_data = cursor.fetchall()
 
-        return render_template('CRUD.html', data=insertObject)
+                # Renderizar el formulario con la información obtenida
+                return render_template('guardardatos.html', data=experiencias_data, sala=opcion_seleccionada)
+
+        # Si no es una solicitud POST, simplemente renderizar el formulario vacío
+        return render_template('guardardatos.html', data=None)
 
     except Exception as e:
-        print(f"Error de conexión a la base de datos: {e}")
-        return "Error de conexión a la base de datos. Consulta los registros del servidor para obtener más información."
+        print(f"Error al procesar la solicitud: {e}")
+
+    finally:
+        # Asegurarse de cerrar la conexión incluso si hay un error
+        if connection and connection.is_connected():
+            connection.close()
+
+    return "Error al procesar la solicitud."
 
 
 #Ruta para guardar usuarios en la bdd del crud
@@ -343,42 +355,31 @@ def obtener_datos():
     return data
 
 #ruta para guardar informacion en la tabla experiencia
-@app.route('/guardardatos', methods=['GET', 'POST'])
-def home():
-   
+@app.route('/CRUD', methods=['GET', 'POST'])
+def home1():
     try:
-        # Obtener una nueva conexión a la base de datos
-        connection = obtener_conexion()
+        connection=obtener_conexion()
 
         # Verificar si la conexión está cerrada y, en ese caso, reconectar
         if not connection.is_connected():
             connection.reconnect()
 
-        if request.method == 'POST':
-            if 'opcion' in request.form:
-                opcion_seleccionada = request.form['opcion']
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM experiencias")
+            myresult = cursor.fetchall()  
 
-                # Obtener la información de la tabla "experiencias" para la opción seleccionada
-                with connection.cursor() as cursor:
-                    sql = "SELECT Activo, NombreSala, NombreExperiencia FROM experiencias WHERE NombreSala = %s"
-                    cursor.execute(sql, (opcion_seleccionada,))
-                    experiencias_data = cursor.fetchall()
+        # Convertir los datos a diccionario
+            insertObject = []
+            columnNames = [column[0] for column in cursor.description]
+            for record in myresult:
+                insertObject.append(dict(zip(columnNames, record)))
 
-                # Renderizar el formulario con la información obtenida
-                return render_template('guardardatos.html', data=experiencias_data, sala=opcion_seleccionada)
-
-        # Si no es una solicitud POST, simplemente renderizar el formulario vacío
-        return render_template('guardardatos.html', data=None)
+        return render_template('CRUD.html', data=insertObject)
 
     except Exception as e:
-        print(f"Error al procesar la solicitud: {e}")
+        print(f"Error de conexión a la base de datos: {e}")
+        return "Error de conexión a la base de datos. Consulta los registros del servidor para obtener más información."
 
-    finally:
-        # Asegurarse de cerrar la conexión incluso si hay un error
-        if connection and connection.is_connected():
-            connection.close()
-
-    return "Error al procesar la solicitud."
 
 
 # Ruta para guardar formulario  en la  base de datos

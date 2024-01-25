@@ -1,0 +1,1 @@
+mysqldump -u root -p D....odema18**** check > C:\Users\manuel.moreno\Documents\dumps\respaldo

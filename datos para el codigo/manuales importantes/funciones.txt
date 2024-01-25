@@ -1,0 +1,227 @@
+from flask import Flask, flash, render_template, request, redirect, url_for
+import os
+from mysql.connector import IntegrityError
+import database as db
+from reportlab.pdfgen import canvas
+from flask import Response
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+
+
+
+template_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+template_dir = os.path.join(template_dir, 'src', 'templates')
+
+app = Flask(__name__, template_folder = template_dir)
+app.secret_key = 'Chek!Q988'
+
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
+# -------------------------------------------------------------------------------------------------------
+# Rutas para la primera aplicación (home1)
+# -------------------------------------------------------------------------------------------------------
+
+@app.route('/')
+def home1():
+
+    with db.database.cursor() as cursor:
+        cursor.execute("SELECT * FROM experiencias")
+        myresult = cursor.fetchall()  
+     # Convertir los datos a diccionario
+        insertObject = []
+        columnNames = [column[0] for column in cursor.description]
+        for record in myresult:
+            insertObject.append(dict(zip(columnNames, record)))
+    return render_template('CRUD.html', data=insertObject)
+
+#Ruta para guardar usuarios en la bdd del crud
+@app.route('/user1', methods=['POST'])
+def addUser1():
+    Activo = request.form['Activo']
+    NombreSala = request.form['NombreSala']
+    NombreExperiencia = request.form['NombreExperiencia']
+
+    if Activo and NombreSala and NombreExperiencia:
+        cursor = db.database.cursor()
+        sql = "INSERT INTO experiencias (Activo, NombreSala, NombreExperiencia) VALUES (%s, %s, %s)"
+        data = (Activo, NombreSala, NombreExperiencia)
+        
+        try:
+            cursor.execute(sql, data)
+            db.database.commit()
+        except IntegrityError as e:
+            db.database.rollback()  # Deshace la transacción
+            warning_message = f"Advertencia: El activo {Activo} ya está registrado. Ingrese un activo unico"
+            flash(warning_message, 'warning')  # Almacena el mensaje en la sesión con la categoría 'warning'
+
+        finally:
+            cursor.close()
+
+    return redirect(url_for('home1'))
+
+ #Ruta para eliminar datos guardados    
+@app.route('/delete1/<string:Activo>')
+def delete1(Activo):
+    cursor = db.database.cursor()
+    sql = "DELETE FROM experiencias WHERE Activo=%s"
+    data = (Activo,)
+    cursor.execute(sql, data)
+    db.database.commit()
+    return redirect(url_for('home1'))
+
+#Editar experiencia guardadas 
+@app.route('/edit1/<string:Activo>', methods=['POST'])
+
+def edit1(Activo):
+    Activo = request.form['Activo']
+    NombreSala = request.form['NombreSala']
+    NombreExperiencia = request.form['NombreExperiencia']
+
+    if Activo and NombreSala and NombreExperiencia:
+
+        cursor = db.database.cursor()
+        sql = "UPDATE experiencias SET Activo = %s, NombreSala = %s, NombreExperiencia = %s WHERE Activo = %s"
+        data = (Activo, NombreSala, NombreExperiencia, Activo)
+        cursor.execute(sql, data)
+        db.database.commit()
+    return redirect(url_for('home1'))
+
+#Funcion para mostrar informacion por sala 
+@app.route('/mostrarchek', methods=['GET', 'POST'])
+def mostrar1():
+
+    fecha_elegida=None
+   
+    if request.method=='POST':
+        fecha_elegida=request.form['Fecha']
+
+        if fecha_elegida:
+
+            cursor=db.database.cursor()
+
+            #Obtener la información de la tabla cheklist para la fecha y todas las salas
+           
+            sql_cheklist="""
+                SELECT Activo, NombreSala, fecha, NombreExperiencia, Estado, Comentario
+                FROM cheklist
+                WHERE DATE(fecha) = %s AND NombreSala IN ('escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil','Taquilla Parque', 'Planetario', 'Taquilla Planetario', 'Correos experiencias')
+                ORDER BY FIELD(NombreSala, 'escena','tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil','Taquilla Parque', 'Planetario', 'Taquilla Planetario', 'Correos experiencias')
+            """          
+            try:
+                cursor.execute(sql_cheklist,(fecha_elegida,))
+                cheklist_date=cursor.fetchall()
+                db.database.commit()  # Hacer commit para guardar los cambios              
+            except Exception as e: 
+                print(f"Error al ejecutar la consulta: {e}")
+                cheklist_date = []
+                db.database.rollback()  # Hacer rollback en caso de error
+            finally:
+                cursor.close()
+                return render_template('mostrarchek.html', data=cheklist_date, sala='')
+            
+    return render_template('mostrarchek.html', fecha_elegida=fecha_elegida)
+
+
+def generar_pdf(cheklist_data):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+
+    # Estilo para la tabla
+    styles = getSampleStyleSheet()
+    style = styles['BodyText']
+
+    # Crear la tabla con los datos
+    data = [["Activo", "NombreSala", "Fecha", "NombreExperiencia", "Estado", "Comentario"]]
+    data.extend([list(map(str, row)) for row in cheklist_data])
+
+    table = Table(data)
+    table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                               ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                               ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                               ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                               ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                               ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                               ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
+
+    # Añadir la tabla al documento
+    doc.build([Paragraph('Informe Checklist', style['Title']), Paragraph('', style['BodyText']), table])
+
+    buffer.seek(0)
+    return buffer.read()
+
+# --------------------------------------------------------------------------------------------
+# Rutas para la segunda aplicación (home)
+# --------------------------------------------------------------------------------------------
+
+# Función para obtener datos de la base de datos
+def obtener_datos():
+    cursor = db.database.cursor()
+    cursor.execute("SELECT * FROM experiencias")
+    myresult = cursor.fetchall()
+    column_names = [column[0] for column in cursor.description]
+    data = [dict(zip(column_names, record)) for record in myresult]
+    cursor.close()
+    return data
+
+#ruta para guardar informacion en la tabla experiencia
+@app.route('/guardardatos', methods=['GET', 'POST'])
+def home():
+    if request.method == 'POST':
+        if 'opcion' in request.form:
+            opcion_seleccionada = request.form['opcion']
+            # Obtener la información de la tabla "experiencias" para la opción seleccionada
+            with db.database.cursor() as cursor:
+                sql = "SELECT Activo, NombreSala, NombreExperiencia FROM experiencias WHERE NombreSala = %s"
+                cursor.execute(sql, (opcion_seleccionada,))
+                experiencias_data = cursor.fetchall()
+
+            # Renderizar el formulario con la información obtenida
+            return render_template('guardardatos.html', data=experiencias_data, sala=opcion_seleccionada)
+
+    # Si no es una solicitud POST, simplemente renderizar el formulario vacío
+    return render_template('guardardatos.html', data=None)
+
+
+
+# Ruta para guardar formulario  en la  base de datos
+@app.route('/submit', methods=['POST'])
+def addUser():
+    Activos = request.form.getlist('Activo[]')
+    NombreSalas = request.form.getlist('NombreSala[]')
+    Fechas = request.form.getlist('Fecha[]')
+    NombreExperiencias = request.form.getlist('NombreExperiencia[]')
+    Estados = request.form.getlist('Estado[]')
+    Comentarios = request.form.getlist('Comentario[]')
+
+    for Activo, NombreSala, NombreExperiencia, Fecha, Estado, Comentario in zip(Activos, NombreSalas, NombreExperiencias, Fechas, Estados, Comentarios):
+        # Utilizar el cursor dentro del bloque 'with' para garantizar el cierre adecuado
+        with db.database.cursor() as cursor:
+            # Verificar si el activo ya realizó un checklist para la misma fecha y sala
+            sql_verificacion_activo = "SELECT * FROM cheklist WHERE Activo = %s AND Fecha = %s AND NombreSala = %s"
+            data_verificacion_activo = (Activo, Fecha, NombreSala)
+            cursor.execute(sql_verificacion_activo, data_verificacion_activo)
+            resultado_verificacion_activo = cursor.fetchone()
+
+            if resultado_verificacion_activo:
+                # El activo ya realizó un checklist para la misma fecha y sala
+                flash(f"Advertencia: El activo {Activo} ya realizó un checklist para la sala {NombreSala} en la fecha {Fecha}.", 'warning')
+            else:
+                # Insertar datos en la tabla cheklist
+                sql_cheklist = "INSERT INTO cheklist (Activo, NombreSala, Fecha, NombreExperiencia, Estado, Comentario) VALUES (%s, %s, %s, %s, %s, %s)"
+                data_cheklist = (Activo, NombreSala, Fecha, NombreExperiencia, Estado, Comentario)
+
+                try:
+                    cursor.execute(sql_cheklist, data_cheklist)
+                    db.database.commit()
+                except IntegrityError as e:
+                    db.database.rollback()
+                    warning_message = f"Advertencia: El activo {Activo} ya está registrado. Ingrese un activo único."
+                    flash(warning_message, 'warning')
+
+    return redirect(url_for('home'))
+
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
