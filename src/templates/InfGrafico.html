@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de Chequeo</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+</head>
+<body>
+  <h1 class="text-center mt-5 mb-5 text-danger">INFORMACION GRAFICA</h1>
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-md-6">
+        <label for="tipo-seleccion" class="form-label">Seleccione Tipo de Selección:</label>
+        <select id="tipo-seleccion" class="form-select">
+          <option value="meses">Meses</option>
+          <option value="años">Años</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="fecha-inicial" class="form-label">Fecha Inicial:</label>
+        <input type="number" id="fecha-inicial" class="form-control" placeholder="Año inicial" min="1900" max="2100">
+      </div>
+      <div class="col-md-3">
+        <label for="fecha-final" class="form-label">Fecha Final:</label>
+        <input type="number" id="fecha-final" class="form-control" placeholder="Año final" min="1900" max="2100">
+      </div>
+    </div>
+    <div class="row mt-4">
+      <div class="col-md-6">
+        <!-- Cambiar el tipo de botón a "button" para evitar la presentación predeterminada del formulario -->
+        <button type="button" class="btn btn-danger mt-4" id="btnMostrarGrafico">Mostrar Graficos</button>
+        <a href="http://10.1.4.49:5000" class="btn btn-danger mt-4">Volver al menú</a>
+      </div>
+    </div>
+    <div class="row mt-5">
+      <div class="col-md-12">
+        <div id="informe"></div>
+        <div id="graficoPorcentajeExperiencias" style="width:100%; height:400px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function() {
+      $('#tipo-seleccion').change(function() {
+        var tipoSeleccion = $(this).val();
+        if (tipoSeleccion === 'meses') {
+          $('#fecha-inicial').prop('disabled', false).attr('type', 'month');
+          $('#fecha-final').prop('disabled', false).attr('type', 'month');
+        } else if (tipoSeleccion === 'años') {
+          $('#fecha-inicial').prop('disabled', false).attr('type', 'number').val('');
+          $('#fecha-final').prop('disabled', false).attr('type', 'number').val('');
+        }
+      });
+
+      $('#btnMostrarGrafico').click(function() {
+        // Recolectar los datos del formulario (o cualquier otra fuente de datos)
+        var tipoSeleccion = $('#tipo-seleccion').val();
+        var fechaInicial = $('#fecha-inicial').val();
+        var fechaFinal = $('#fecha-final').val();
+
+        // Crear un objeto con los datos que deseas enviar al servidor Flask
+        var datos = {
+          tipoSeleccion: tipoSeleccion,
+          rangoFechas: { fechaInicial: fechaInicial, fechaFinal: fechaFinal }
+        };
+
+        // Realizar una solicitud AJAX POST al servidor Flask
+        $.ajax({
+          type: 'POST',
+          url: '/mostrar_grafico',
+          data: JSON.stringify(datos),
+          contentType: 'application/json',
+          success: function(response) {
+            // Manejar la respuesta del servidor
+            if (response.imagen) {
+                // Crear un elemento <img> con la imagen base64
+                var img = $('<img>').attr('src', 'data:image/png;base64,' + response.imagen);
+                // Agregar la imagen al elemento con id="graficoPorcentajeExperiencias"
+                $('#graficoPorcentajeExperiencias').empty().append(img);
+            } else {
+                // Si no hay imagen en la respuesta, mostrar un mensaje de error o realizar alguna otra acción
+                console.log('No se recibió ninguna imagen del servidor');
+            }
+        }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,14 +1,20 @@
-from flask import Flask, flash, render_template, request, redirect, url_for, send_file
+import base64
+from flask import Flask, flash, render_template, request, redirect, url_for, send_file, jsonify
 import os
 from mysql.connector import IntegrityError
 from reportlab.pdfgen import canvas
-from flask import Response
+#from flask import Response
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  # Establecer el backend de Matplotlib
 from io import BytesIO
 import database as db
+from collections import defaultdict
 
 
 template_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
@@ -28,7 +34,7 @@ def obtener_conexion():
 
 @app.route('/', methods=['GET', 'POST'])
 def home(): 
-    try:
+     try:
         # Obtener una nueva conexión a la base de datos
         connection = obtener_conexion()
 
@@ -48,19 +54,21 @@ def home():
 
                 # Renderizar el formulario con la información obtenida
                 return render_template('guardardatos.html', data=experiencias_data, sala=opcion_seleccionada)
+        
 
         # Si no es una solicitud POST, simplemente renderizar el formulario vacío
         return render_template('guardardatos.html', data=None)
 
-    except Exception as e:
-        print(f"Error al procesar la solicitud: {e}")
+     except Exception as e:
+         print(f"Error al procesar la solicituddd: {e}")
 
-    finally:
+     finally:
         # Asegurarse de cerrar la conexión incluso si hay un error
-        if connection and connection.is_connected():
-            connection.close()
+         if connection and connection.is_connected():
+             
+             connection.close()
 
-    return "Error al procesar la solicitud."
+     return "Error al procesar la solicitudd."
 
 
 #Ruta para guardar usuarios en la bdd del crud
@@ -73,8 +81,6 @@ def addUser1():
         # Verificar si la conexión está cerrada y, en ese caso, reconectar
         if not connection.is_connected():
             connection.reconnect()
-    
-
 
         Activo = request.form['Activo']
         NombreSala = request.form['NombreSala']
@@ -222,6 +228,45 @@ def mostrar1():
 
     return render_template('mostrarchek.html', fecha_elegida=fecha_elegida)
 
+#---------------------------------------------------------------------------------------------------------------------
+# Función para actualizar el estado en la base de datos
+@app.route('/actualizar_estado', methods=['POST'])
+def actualizar_estado():
+    try:
+        connection = obtener_conexion()
+        if not connection.is_connected():
+            connection.reconnect()
+
+        if request.method == 'POST':
+            activo = request.form['activo']  # Obtener el identificador único del formulario
+            nuevo_estado = request.form['estado']  # Obtener el nuevo estado del formulario
+
+            with connection.cursor() as cursor:
+                # Actualizar el estado en la base de datos para la fila con el identificador único especificado
+                sql_update_estado = """
+                    UPDATE cheklist
+                    SET Estado = %s
+                    WHERE Activo = %s
+                """
+                try:
+                    cursor.execute(sql_update_estado, (nuevo_estado, activo))
+                    connection.commit()  # Hacer commit para guardar los cambios
+                except Exception as e:
+                    connection.rollback()  # Hacer rollback en caso de error
+                    raise e  # Relanzar la excepción para identificar el error
+
+    except Exception as e:
+        print(f"Error de conexión a la base de datos: {e}")
+        return "Error de conexión a la base de datos. Consulta los registros del servidor para obtener más información."
+
+    finally:
+        # Asegurarse de cerrar la conexión al finalizar la operación
+        if connection and connection.is_connected():
+            connection.close()
+
+    # Redirigir a la página principal después de actualizar el estado
+    return redirect(url_for('mostrar1'))
+
 
 
 def obtener_cheklist_data(fecha_inicial, fecha_final):
@@ -236,7 +281,7 @@ def obtener_cheklist_data(fecha_inicial, fecha_final):
             
 
         cursor = connection.cursor()
-
+        #eliminar la busqueda por el nombre de sala ya que no se esta utilizando debido a que nos importa que jale todo lo que esta en ese rango de fecha
         # Modifica la consulta SQL según la estructura de tu base de datos
         sql_cheklist = """
             SELECT Activo, NombreSala, fecha, NombreExperiencia, Estado, Comentario
@@ -267,8 +312,6 @@ def obtener_cheklist_data(fecha_inicial, fecha_final):
 
     return cheklist_date
 
-
-
 @app.route('/exportar', methods=['GET'])
 def exportar():
     fecha_inicial = request.args.get('fecha_inicial')
@@ -284,7 +327,6 @@ def exportar():
 
     # Enviar el archivo al navegador para su descarga
     return send_file(buffer, download_name='Informe_Checklist.pdf', as_attachment=True)
-
 
 def generar_pdf(fecha_inicial, fecha_final):
     buffer = BytesIO()
@@ -320,11 +362,137 @@ def generar_pdf(fecha_inicial, fecha_final):
     pdf_content = buffer.getvalue()
     return pdf_content
 
+def obtener_cheklist_dataG(fecha_inicial, fecha_final):
+    cheklist_dateG = []
 
+    try:
+        # Obtener una nueva conexión a la base de datos
+        connection = obtener_conexion()
+       
+        if not connection.is_connected():
+            connection.reconnect()
+
+        cursor = connection.cursor()
+
+        # Modificar la consulta SQL según el tipo de selección
+        if len(fecha_inicial) == 4 and len(fecha_final) == 4:
+            # Selección por año
+            sql_cheklist = """
+                SELECT Activo, NombreSala, fecha, NombreExperiencia, Estado, Comentario
+                FROM cheklist
+                WHERE DATE_FORMAT(fecha, '%Y') BETWEEN %s AND %s 
+                ORDER BY FIELD(NombreSala, 'escena', 'tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil', 'Taquilla Parque', 'Planetario 1 nivel', 'Planetario 2 nivel', 'Planetario 3 nivel', 'Taquilla Planetario', 'Correos')
+            """
+        elif len(fecha_inicial) == 7 and len(fecha_final) == 7:
+            # Selección por año-mes
+            sql_cheklist = """
+                SELECT Activo, NombreSala, fecha, NombreExperiencia, Estado, Comentario
+                FROM cheklist
+                WHERE DATE_FORMAT(fecha, '%Y-%m') BETWEEN %s AND %s
+                ORDER BY FIELD(NombreSala, 'escena', 'tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil', 'Taquilla Parque', 'Planetario 1 nivel', 'Planetario 2 nivel', 'Planetario 3 nivel', 'Taquilla Planetario', 'Correos')
+            """
+        else:
+            # No es un formato válido, manejar error si es necesario
+            pass
+
+        try:
+            cursor.execute(sql_cheklist, (fecha_inicial, fecha_final))
+            cheklist_dateG = cursor.fetchall()
+            connection.commit()
+        except Exception as e:
+            print(f"Error al ejecutar la consulta: {e}")
+            connection.rollback()
+        finally:
+            # Asegurarse de cerrar la conexión incluso si hay un error
+            if cursor:
+                cursor.close()
+
+    except Exception as e:
+        print(f"Error al establecer la conexión a la base de datos: {e}")
+
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
+
+    return cheklist_dateG 
+
+def procesar_datos_cheklist(datos_cheklist):
+    # Inicializar un diccionario para almacenar las cantidades por sala y estado
+    cantidades_por_sala_estado = defaultdict(lambda: {'BUENA': 0, 'REPARADA': 0, 'DESHABILITADA': 0})
+
+    # Iterar sobre los datos de la checklist y contar las experiencias de cada tipo para cada sala
+    for dato in datos_cheklist:
+        sala = dato[3]  # Obtener el nombre de la sala
+        estado = dato[4]  # Obtener el estado
+        # Incrementar el contador correspondiente al estado para la sala actual
+        cantidades_por_sala_estado[sala][estado] += 1
+
+    return cantidades_por_sala_estado
+
+
+@app.route('/mostrar_grafico', methods=['GET','POST'])
+def mostrarGrafico():
+    try:
+        if request.method != 'POST':
+            # Si la solicitud no es POST, renderiza la página HTML
+            return render_template('InfGrafico.html')
+
+        datos = request.json  # Obtener los datos enviados desde la página HTML
+
+        tipo_seleccion = datos['tipoSeleccion']
+        rango_fechas = datos['rangoFechas']
+        fecha_inicial = rango_fechas['fechaInicial']
+        fecha_final = rango_fechas['fechaFinal']
+
+        print(f'Tipo de selección: {tipo_seleccion}')
+        print(f'Fecha inicial: {fecha_inicial}')
+        print(f'Fecha final: {fecha_final}')
+
+        # Obtener los datos para el gráfico desde la base de datos
+        datos_cheklist = obtener_cheklist_dataG(fecha_inicial, fecha_final)
+        
+        # Procesar los datos para obtener las cantidades de experiencias por sala y estado
+        cantidades_por_sala_estado = procesar_datos_cheklist(datos_cheklist)
+
+        # Obtener las cantidades de experiencias buenas, reparadas y deshabilitadas por sala
+        buenas_por_sala = [cantidades_por_sala_estado[sala]['BUENA'] for sala in cantidades_por_sala_estado]
+        reparadas_por_sala = [cantidades_por_sala_estado[sala]['REPARADA'] for sala in cantidades_por_sala_estado]
+        deshabilitadas_por_sala = [cantidades_por_sala_estado[sala]['DESHABILITADA'] for sala in cantidades_por_sala_estado]
+
+        # Crear una nueva figura y ejes
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        # Barra para experiencias buenas
+        ax.bar(cantidades_por_sala_estado.keys(), buenas_por_sala, color='green', label='BUENAS')
+        # Barra para experiencias reparadas
+        ax.bar(cantidades_por_sala_estado.keys(), reparadas_por_sala, bottom=buenas_por_sala, color='blue', label='REPARADAS')
+        # Barra para experiencias deshabilitadas
+        ax.bar(cantidades_por_sala_estado.keys(), deshabilitadas_por_sala, bottom=[buenas + reparadas for buenas, reparadas in zip(buenas_por_sala, reparadas_por_sala)], color='red', label='DESHABILITADAS')
+
+        ax.set_xlabel('Sala')
+        ax.set_ylabel('Cantidad')
+        ax.set_title('Experiencias por Sala y Estado')
+        ax.legend()
+
+        # Convertir el gráfico a imagen base64
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+
+        # Devolver la imagen base64 al cliente
+        return jsonify({'imagen': img_str})
+
+    except Exception as e:
+        print(f"Error al mostrar el gráfico: {e}")
+        return jsonify({'error': 'Error al procesar los datos para el gráfico: ' + str(e)})
+
+    
 # --------------------------------------------------------------------------------------------
 # Rutas para la segunda aplicación (home)
 # --------------------------------------------------------------------------------------------
 
+"""""funcion sin utilizar
 # Función para obtener datos de la base de datos
 def obtener_datos():
 
@@ -353,6 +521,7 @@ def obtener_datos():
             connection.close()
     
     return data
+"""
 
 #ruta para guardar informacion en la tabla experiencia
 @app.route('/CRUD', methods=['GET', 'POST'])

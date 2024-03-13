@@ -1,5 +1,6 @@
 aplicaciones:
-
+pandas
+matploib
 mysql-installer-community-8.0.35.0 (1)
 python-3.12.0-amd64
 VSCodeUserSetup-x64-1.83.1
@@ -12,6 +13,7 @@ start waitress-serve --listen=10.1.0.24:5000 guardar:app
 
 start /B cmd /c "cd C:\cheklistexperiencia\src && start waitress-serve --listen=10.1.0.24:5000 guardar:app"
 
+sc create startejec binPath= "C:\cheklistexperiencia\ejecutable.bat" start= auto
 
 
 nssm install startchek "C:\Users\administrador.PARQUE-EXPLORA\AppData\Local\Programs\Python\Python312\python.exe" "C:\Users\administrador.PARQUE-EXPLORA\AppData\Local\Programs\Python\Python312\Scripts\waitress-serve.exe" "--listen=10.1.0.24:5000" "C:\cheklistexperiencia\src\guardar:app"
@@ -36,3 +38,4 @@ https://stackoverflow.com/questions/27537892/cursor-raise-errors-operationalerro
 
 https://www.youtube.com/watch?v=ml6DUGxCUQY&ab_channel=Blijf
 https://www.youtube.com/watch?v=D0s1Y5MEiZY&ab_channel=C%C3%B3digosdeProgramaci%C3%B3n-MR
+https://www.youtube.com/watch?v=sBbWjG8ghtg&ab_channel=Kode%7CDesarrolloweb

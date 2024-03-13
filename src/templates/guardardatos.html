@@ -23,7 +23,7 @@
 </head>
 
 <body>
-    <h1 class="text-center mt-5 mb-5 text-primary">LISTA DE CHEQUEO</h1>
+    <h1 class="text-center mt-5 mb-5 text-danger">LISTA DE CHEQUEO</h1>
     <div class="container">
         <div class="card shadow">
             <div class="card-body">
@@ -59,11 +59,12 @@
                                 <option value="Correos">Correos</option>
                             </select>
 
-                            <button class="btn btn-primary mb-3 mt-4 ms-2" type="submit">Mostrar Información</button>
+                         <!--   <button class="btn btn-primary mb-3 mt-4 ms-2" type="submit">Mostrar Información</button>-->
 
                             <div class="d-flex">                               
-                                <a href="{{ url_for('home1') }}" class="btn btn-primary mb-3 mt-4 ms-2">Agregar Experiencia</a>
-                                <a href="{{ url_for('mostrar1') }}" class="btn btn-primary mb-3 mt-4 ms-2">Mostrar Informe</a>
+                                <a href="{{ url_for('home1') }}" class="btn btn-danger mb-3 mt-4 ms-2">Agregar Experiencia</a>
+                                <a href="{{ url_for('mostrar1') }}" class="btn btn-danger mb-3 mt-4 ms-2">Mostrar Informe</a>
+                                <a href="{{ url_for('mostrarGrafico') }}" class="btn btn-danger mb-3 mt-4 ms-2">Mostrar Graficos</a>
                             </div>
                
                         </div>
@@ -123,7 +124,7 @@
                     </form>                   
                 </table>
                 <!-- Botón de enviar -->
-                <button id="botonEnviar" class="btn btn-success" type="button">Enviar</button>
+                <button id="botonEnviar" class="btn btn-danger" type="button">Enviar</button>
             </div>
         </div>
     </div>
@@ -140,6 +141,15 @@
             // Establecer la fecha actual en el campo de fecha
             var currentDate = $.datepicker.formatDate('yy-mm-dd', new Date());
             $(".fecha-manual").val(currentDate);
+
+            // Obtener el menú desplegable por su nombre
+            var selectOpcion = $("select[name='opcion']");
+
+            // Agregar un evento change al menú desplegable
+            selectOpcion.on("change", function () {
+            // Enviar el formulario automáticamente cuando se selecciona una opción
+                $("#formularioPrincipal").submit();
+            });
 
             // Obtener el botón por su ID
             var botonEnviar = $("#botonEnviar");

@@ -23,7 +23,8 @@
 </head>
 
 <body>
-    <h1 class="text-center mt-5 mb-5 text-primary">CHECKLIST DE SALAS </h1>
+    <h1 class="text-center mt-5 mb-5 text-danger">CHECKLIST DE SALAS</h1>
+
     <div class="container">
         <div class="card shadow">
             <div class="card-body">
@@ -31,7 +32,7 @@
                     <div class="row mb-3">
                         <div class="col d-flex align-items-end">
                             <input type="text" class="form-control mb-3 fecha-manual" name="Fecha" placeholder="yy-mm-dd" autocomplete="off">
-                            <button class="btn btn-primary mb-3 mt-4 ms-2" type="submit">Mostrar información</button>
+                            <button class="btn btn-danger mb-3 mt-4 ms-2" type="submit">Mostrar información</button>
                         </div>
                     </div>
                 </form>
@@ -58,7 +59,14 @@
                                     <td>{{ row[3] if row[3] is defined else '' }}</td>
 
                                     <td class="{% if row[4] == 'BUENA' %}estado-buena{% elif row[4] == 'REPARADA' %}estado-reparada{% elif row[4] == 'DESHABILITADA' %}estado-deshabilitada{% endif %}">
-                                        {{ row[4] if row[4] is defined else '' }}
+                                        <form action="/actualizar_estado" method="POST">
+                                            <input type="hidden" name="activo" value="{{ row[0] }}">
+                                            <select name="estado" onchange="this.form.submit()">
+                                                <option value="BUENA" {% if row[4] == 'BUENA' %} selected {% endif %}>BUENA</option>
+                                                <option value="REPARADA" {% if row[4] == 'REPARADA' %} selected {% endif %}>REPARADA</option>
+                                                <option value="DESHABILITADA" {% if row[4] == 'DESHABILITADA' %} selected {% endif %}>DESHABILITADA</option>
+                                            </select>
+                                        </form>
                                     </td>
 
                                     <td>{{ row[5] if row[5] is defined else '' }}</td>
@@ -78,8 +86,8 @@
 
                 <div class="row">
                     <div class="col">
-                        <a href="http://10.1.4.49:5000" class="btn btn-secondary flex-grow-1">Volver al menú</a>
-                        <button id="exportButton" class="btn btn-secondary flex-grow-1" onclick="abrirCalendario()">Exportar informe</button>
+                        <a href="http://10.1.4.49:5000" class="btn btn-danger flex-grow-1">Volver al menú</a>
+                        <button id="exportButton" class="btn btn-danger flex-grow-1" onclick="abrirCalendario()">Exportar informe</button>
                     </div>
                 </div>
             </div>
@@ -112,7 +120,7 @@
                         return;
                     }
 
-                    // Redirige a la URL que maneja la exportación o realiza la acción que necesites
+                    // Redirige a la URL que maneja la exportación o realiza la acción que necesites se envia a la funcion exportar
                     window.location.href = `/exportar?fecha_inicial=${fechaInicial}&fecha_final=${fechaFinal}`;
                 } else {
                     // Manejo de caso en el que el usuario no proporciona ambas fechas
