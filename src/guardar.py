@@ -422,8 +422,9 @@ def procesar_datos_cheklist(datos_cheklist):
 
     # Iterar sobre los datos de la checklist y contar las experiencias de cada tipo para cada sala
     for dato in datos_cheklist:
-        sala = dato[3]  # Obtener el nombre de la sala
+        sala = dato[1]  # Obtener el nombre de la sala
         estado = dato[4]  # Obtener el estado
+        mes=dato[2]#esto permitira mostrar el grafico por meses 
         # Incrementar el contador correspondiente al estado para la sala actual
         cantidades_por_sala_estado[sala][estado] += 1
 
@@ -460,7 +461,7 @@ def mostrarGrafico():
         deshabilitadas_por_sala = [cantidades_por_sala_estado[sala]['DESHABILITADA'] for sala in cantidades_por_sala_estado]
 
         # Crear una nueva figura y ejes
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=(12, 6))
 
         # Barra para experiencias buenas
         ax.bar(cantidades_por_sala_estado.keys(), buenas_por_sala, color='green', label='BUENAS')
@@ -474,6 +475,9 @@ def mostrarGrafico():
         ax.set_title('Experiencias por Sala y Estado')
         ax.legend()
 
+        # Rotar las etiquetas del eje x
+        ax.set_xticklabels(cantidades_por_sala_estado.keys(), rotation=20, ha='right')
+
         # Convertir el gráfico a imagen base64
         buffer = BytesIO()
         plt.savefig(buffer, format='png')
@@ -486,6 +490,7 @@ def mostrarGrafico():
     except Exception as e:
         print(f"Error al mostrar el gráfico: {e}")
         return jsonify({'error': 'Error al procesar los datos para el gráfico: ' + str(e)})
+
 
     
 # --------------------------------------------------------------------------------------------
