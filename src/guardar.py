@@ -22,7 +22,6 @@ template_dir = os.path.join(template_dir, 'src', 'templates')
 
 app = Flask(__name__, template_folder = template_dir)
 app.secret_key = 'Chek!Q988'
-
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 # -------------------------------------------------------------------------------------------------------
@@ -74,7 +73,6 @@ def home():
 #Ruta para guardar usuarios en la bdd del crud
 @app.route('/user1', methods=['POST'])
 def addUser1():
-
     try:
         connection= obtener_conexion()
 
@@ -423,8 +421,8 @@ def procesar_datos_cheklist(datos_cheklist):
     # Iterar sobre los datos de la checklist y contar las experiencias de cada tipo para cada sala
     for dato in datos_cheklist:
         sala = dato[1]  # Obtener el nombre de la sala
-        estado = dato[4]  # Obtener el estado
-        mes=dato[2]#esto permitira mostrar el grafico por meses 
+        estado = dato[4]  # Obtener el estado  
+        fecha=dato[2]#obtener fecha    
         # Incrementar el contador correspondiente al estado para la sala actual
         cantidades_por_sala_estado[sala][estado] += 1
 
@@ -475,7 +473,7 @@ def mostrarGrafico():
         ax.set_title('Experiencias por Sala y Estado')
         ax.legend()
 
-        # Rotar las etiquetas del eje x
+        ax.set_xticks(range(len(cantidades_por_sala_estado.keys())))
         ax.set_xticklabels(cantidades_por_sala_estado.keys(), rotation=20, ha='right')
 
         # Convertir el gráfico a imagen base64
@@ -491,42 +489,9 @@ def mostrarGrafico():
         print(f"Error al mostrar el gráfico: {e}")
         return jsonify({'error': 'Error al procesar los datos para el gráfico: ' + str(e)})
 
-
-    
 # --------------------------------------------------------------------------------------------
 # Rutas para la segunda aplicación (home)
 # --------------------------------------------------------------------------------------------
-
-"""""funcion sin utilizar
-# Función para obtener datos de la base de datos
-def obtener_datos():
-
-    try:
-        # Obtener una nueva conexión a la base de datos
-        connection = obtener_conexion()
-       
-        if not  connection.is_connected():
-            connection.reconnect()
-
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM experiencias")
-        myresult = cursor.fetchall()
-        column_names = [column[0] for column in cursor.description]
-        data = [dict(zip(column_names, record)) for record in myresult]
-
-    except Exception as e:
-        print(f"Error al obtener datos de la base de datos: {e}")
-
-    finally:
-        # Asegurarse de cerrar el cursor y la conexión incluso si hay un error
-        if cursor:
-            cursor.close()
-
-        if connection and connection.is_connected():
-            connection.close()
-    
-    return data
-"""
 
 #ruta para guardar informacion en la tabla experiencia
 @app.route('/CRUD', methods=['GET', 'POST'])
