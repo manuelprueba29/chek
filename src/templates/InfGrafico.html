@@ -19,8 +19,28 @@
   <h1 class="text-center mt-5 mb-5 text-danger">INFORMACION GRAFICA</h1>
   <div class="container mt-5">
     <div class="row">
+
       <div class="col-md-6">
-        <label for="tipo-seleccion" class="form-label">Seleccione Tipo de Selección:</label>
+        <label for="tipo-sala" class="form-label">Seleccione Sala:</label>
+        <select id="tipo-sala" class="form-select">
+          <option value="Acuario">Acuario</option>
+          <option value="Musica">Musica</option>
+          <option value="Mente">Mente</option>
+          <option value="Vivario">Vivario</option>
+          <option value="Sala Infantil">Infantil</option>
+          <option value="Tiempo">Tiempo</option>
+          <option value="Escena">Escena</option>
+          <option value="Planetario 1 nivel">Planetario 1 nivel</option>
+          <option value="Planetario 2 nivel">Planetario 2 nivel</option>
+          <option value="Planetario 3 nivel">Planetario 3 nivel</option>
+          <option value="Taquilla Parque">Taquilla Parque</option>
+          <option value="Taquilla Planetario">Taquilla Planetario</option>
+          <option value="Correos">Correos</option>               
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label for="tipo-seleccion" class="form-label">Seleccione Tipo de Fecha:</label>
         <select id="tipo-seleccion" class="form-select">
             <option value="años">Años</option>
             <option value="meses">Meses</option>        
@@ -65,13 +85,14 @@
 
       $('#btnMostrarGrafico').click(function() {
         // Recolectar los datos del formulario (o cualquier otra fuente de datos)
+        var tipoSala= $('#tipo-sala').val();
         var tipoSeleccion = $('#tipo-seleccion').val();
         var fechaInicial = $('#fecha-inicial').val();
         var fechaFinal = $('#fecha-final').val();
 
         // Crear un objeto con los datos que deseas enviar al servidor Flask
         var datos = {
-          tipoSeleccion: tipoSeleccion,
+          tipoSeleccion: tipoSeleccion, tipoSala:tipoSala,
           rangoFechas: { fechaInicial: fechaInicial, fechaFinal: fechaFinal }
         };
 

@@ -1,0 +1,10 @@
+como hago si quiero sacar el resultado ejemplo: tengo una sala donde todos los dias miro el estado de cada experiencia. 
+Ejemplo la experiencia experiencia; vive tu musica. Esa experiencia el primer dia esta buena, segundo dia buena, tercer dia mala, cuarto dia reparda, quinto dia buena y asi consecutivamente. Tambien tiempos de historia. Esa experiencia el primer dia esta buena, segundo dia mala, tercer dia mala, cuarto dia rmala, quinto dia mala y asi consecutivamente. Esto  va  a realizar una validacion por años o por meses y cuando yo elija si quiero ver el grafico por mes o por año me debe mostrar segun la sala seleccionada todas las experincias y por experiencia hacer el promedio del 100%  que porcentaje de veces estuvo buena, que porcentaje de veces estuvo mala y que porcentaje de veces se reparo  por ese mes o si selecciono año por ese año 
+
+---------------------------------------------------------------------
+
+Imaginemos una situación en la que tienes un laboratorio de pruebas para diferentes tipos de materiales. Cada día, realizas pruebas en dos tipos de materiales: "Fibra resistente" y "Metal duradero". Para la fibra resistente, observas que en el primer día la prueba es exitosa, en el segundo día también, pero en el tercero falla, luego se repara en el cuarto día, y así sucesivamente. Para el metal duradero, observas que en el primer día la prueba falla, en el segundo día también, en el tercero se repara, pero luego vuelve a fallar en el cuarto día, y así continúa.
+
+Ahora, cuando realizas una validación mensual o anual, deseas ver un gráfico que muestre la tendencia de estas pruebas. Cuando seleccionas ver el gráfico por mes o por año, deseas que te muestre el porcentaje de veces que la prueba fue exitosa, el porcentaje de veces que falló y el porcentaje de veces que se reparó, para ambos tipos de materiales.
+
+Entonces, si eliges ver el gráfico por mes, te mostrará el promedio mensual de cada uno de estos porcentajes para ambas pruebas. Y si eliges verlo por año, te mostrará el promedio anual. Esto te permitirá tener una visión clara de cómo se comportan estas pruebas con el tiempo y qué tan efectivas son en general.

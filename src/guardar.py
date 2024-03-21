@@ -15,6 +15,8 @@ matplotlib.use('Agg')  # Establecer el backend de Matplotlib
 from io import BytesIO
 import database as db
 from collections import defaultdict
+import pandas as pd
+from tabulate import tabulate
 
 
 template_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
@@ -360,7 +362,7 @@ def generar_pdf(fecha_inicial, fecha_final):
     pdf_content = buffer.getvalue()
     return pdf_content
 
-def obtener_cheklist_dataG(fecha_inicial, fecha_final):
+def obtener_cheklist_dataG(fecha_inicial, fecha_final, tipo_sala):
     cheklist_dateG = []
 
     try:
@@ -378,7 +380,7 @@ def obtener_cheklist_dataG(fecha_inicial, fecha_final):
             sql_cheklist = """
                 SELECT Activo, NombreSala, fecha, NombreExperiencia, Estado, Comentario
                 FROM cheklist
-                WHERE DATE_FORMAT(fecha, '%Y') BETWEEN %s AND %s 
+                WHERE DATE_FORMAT(fecha, '%Y') BETWEEN %s AND %s AND NombreSala = %s
                 ORDER BY FIELD(NombreSala, 'escena', 'tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil', 'Taquilla Parque', 'Planetario 1 nivel', 'Planetario 2 nivel', 'Planetario 3 nivel', 'Taquilla Planetario', 'Correos')
             """
         elif len(fecha_inicial) == 7 and len(fecha_final) == 7:
@@ -386,7 +388,7 @@ def obtener_cheklist_dataG(fecha_inicial, fecha_final):
             sql_cheklist = """
                 SELECT Activo, NombreSala, fecha, NombreExperiencia, Estado, Comentario
                 FROM cheklist
-                WHERE DATE_FORMAT(fecha, '%Y-%m') BETWEEN %s AND %s
+                WHERE DATE_FORMAT(fecha, '%Y-%m') BETWEEN %s AND %s AND NombreSala = %s
                 ORDER BY FIELD(NombreSala, 'escena', 'tiempo', 'mente', 'musica', 'acuario', 'vivario', 'Sala 3D', 'Sala infantil', 'Taquilla Parque', 'Planetario 1 nivel', 'Planetario 2 nivel', 'Planetario 3 nivel', 'Taquilla Planetario', 'Correos')
             """
         else:
@@ -394,8 +396,10 @@ def obtener_cheklist_dataG(fecha_inicial, fecha_final):
             pass
 
         try:
-            cursor.execute(sql_cheklist, (fecha_inicial, fecha_final))
+            cursor.execute(sql_cheklist, (fecha_inicial, fecha_final, tipo_sala,))        
             cheklist_dateG = cursor.fetchall()
+            df = pd.DataFrame(cheklist_dateG, columns=['Activo', 'sala', 'Fecha', 'Nombre', 'Estado', 'Observaciones'])
+            print(tabulate(df, headers='keys', tablefmt='grid'))          
             connection.commit()
         except Exception as e:
             print(f"Error al ejecutar la consulta: {e}")
@@ -414,22 +418,28 @@ def obtener_cheklist_dataG(fecha_inicial, fecha_final):
 
     return cheklist_dateG 
 
+
 def procesar_datos_cheklist(datos_cheklist):
     # Inicializar un diccionario para almacenar las cantidades por sala y estado
+   
     cantidades_por_sala_estado = defaultdict(lambda: {'BUENA': 0, 'REPARADA': 0, 'DESHABILITADA': 0})
 
     # Iterar sobre los datos de la checklist y contar las experiencias de cada tipo para cada sala
     for dato in datos_cheklist:
         sala = dato[1]  # Obtener el nombre de la sala
-        estado = dato[4]  # Obtener el estado  
-        fecha=dato[2]#obtener fecha    
+       
+        estado = dato[4]  # Obtener el estado
+        
+        fecha=dato[2]#obtener fecha  
+        
         # Incrementar el contador correspondiente al estado para la sala actual
         cantidades_por_sala_estado[sala][estado] += 1
+      
 
     return cantidades_por_sala_estado
 
 
-@app.route('/mostrar_grafico', methods=['GET','POST'])
+@app.route('/mostrar_grafico', methods=['GET', 'POST'])
 def mostrarGrafico():
     try:
         if request.method != 'POST':
@@ -442,19 +452,29 @@ def mostrarGrafico():
         rango_fechas = datos['rangoFechas']
         fecha_inicial = rango_fechas['fechaInicial']
         fecha_final = rango_fechas['fechaFinal']
+        tipo_sala=datos['tipoSala']
 
-        print(f'Tipo de selección: {tipo_seleccion}')
-        print(f'Fecha inicial: {fecha_inicial}')
-        print(f'Fecha final: {fecha_final}')
+        # Validar el tipo de selección (por año o por mes)
+        if tipo_seleccion == 'años':
+            # Obtener el año inicial y final desde las fechas proporcionadas
+            #año_inicial = fecha_inicial[:4]
+            #año_final = fecha_final[:4]
 
-        # Obtener los datos para el gráfico desde la base de datos
-        datos_cheklist = obtener_cheklist_dataG(fecha_inicial, fecha_final)
-        
+            # Obtener los datos para el gráfico desde la base de datos por año
+            datos_cheklist = obtener_cheklist_dataG(fecha_inicial, fecha_final, tipo_sala)
+        elif tipo_seleccion == 'meses':
+            # Obtener los datos para el gráfico desde la base de datos por mes
+            datos_cheklist = obtener_cheklist_dataG(fecha_inicial, fecha_final, tipo_sala)
+        else:
+            return jsonify({'error': 'Tipo de selección no válido'})
+
         # Procesar los datos para obtener las cantidades de experiencias por sala y estado
         cantidades_por_sala_estado = procesar_datos_cheklist(datos_cheklist)
+        print(cantidades_por_sala_estado)
+
 
         # Obtener las cantidades de experiencias buenas, reparadas y deshabilitadas por sala
-        buenas_por_sala = [cantidades_por_sala_estado[sala]['BUENA'] for sala in cantidades_por_sala_estado]
+        buenas_por_sala = [cantidades_por_sala_estado[sala]['BUENA'] for sala in cantidades_por_sala_estado]#revisar como salen los datos 
         reparadas_por_sala = [cantidades_por_sala_estado[sala]['REPARADA'] for sala in cantidades_por_sala_estado]
         deshabilitadas_por_sala = [cantidades_por_sala_estado[sala]['DESHABILITADA'] for sala in cantidades_por_sala_estado]
 
@@ -488,6 +508,7 @@ def mostrarGrafico():
     except Exception as e:
         print(f"Error al mostrar el gráfico: {e}")
         return jsonify({'error': 'Error al procesar los datos para el gráfico: ' + str(e)})
+
 
 # --------------------------------------------------------------------------------------------
 # Rutas para la segunda aplicación (home)
