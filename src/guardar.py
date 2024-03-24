@@ -3,20 +3,17 @@ from flask import Flask, flash, render_template, request, redirect, url_for, sen
 import os
 from mysql.connector import IntegrityError
 from reportlab.pdfgen import canvas
-#from flask import Response
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
-import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')  # Establecer el backend de Matplotlib
 from io import BytesIO
 import database as db
 from collections import defaultdict
-import pandas as pd
-from tabulate import tabulate
+import numpy as np
 
 
 template_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
@@ -398,8 +395,12 @@ def obtener_cheklist_dataG(fecha_inicial, fecha_final, tipo_sala):
         try:
             cursor.execute(sql_cheklist, (fecha_inicial, fecha_final, tipo_sala,))        
             cheklist_dateG = cursor.fetchall()
-            df = pd.DataFrame(cheklist_dateG, columns=['Activo', 'sala', 'Fecha', 'Nombre', 'Estado', 'Observaciones'])
-            print(tabulate(df, headers='keys', tablefmt='grid'))          
+          
+            """""
+            #df = pd.DataFrame(cheklist_dateG, columns=['Activo', 'sala', 'Fecha', 'Nombre', 'Estado', 'Observaciones'])
+           # print(tabulate(df, headers='keys', tablefmt='grid'))   
+            """"" 
+                 
             connection.commit()
         except Exception as e:
             print(f"Error al ejecutar la consulta: {e}")
@@ -420,24 +421,60 @@ def obtener_cheklist_dataG(fecha_inicial, fecha_final, tipo_sala):
 
 
 def procesar_datos_cheklist(datos_cheklist):
-    # Inicializar un diccionario para almacenar las cantidades por sala y estado
-   
-    cantidades_por_sala_estado = defaultdict(lambda: {'BUENA': 0, 'REPARADA': 0, 'DESHABILITADA': 0})
+
+    # Inicializar un diccionario para almacenar las cantidades por experiencia y estado
+    cantidades_por_experiencia_estado = defaultdict(lambda: {'BUENA': 0, 'REPARADA': 0, 'DESHABILITADA': 0})
+    total_por_experiencia = defaultdict(int)
+    datos = request.json
+    tipo_seleccion = datos['tipoSeleccion']
 
     # Iterar sobre los datos de la checklist y contar las experiencias de cada tipo para cada sala
     for dato in datos_cheklist:
-        sala = dato[1]  # Obtener el nombre de la sala
-       
+        fecha=dato[2]#obtener fecha
+        nombre = dato[3]  # Obtener nombre de la experiencia
         estado = dato[4]  # Obtener el estado
         
-        fecha=dato[2]#obtener fecha  
+        # Obtener el año o el mes dependiendo del tipo de selección
+        if tipo_seleccion == 'años':
+            clave = fecha.year
+        elif tipo_seleccion == 'meses':
+            clave = fecha.strftime('%Y-%m')  # Formato: 'YYYY-MM'
+            
+        # Incrementar el contador correspondiente al estado para la experiencia actual
+
+        cantidades_por_experiencia_estado[(nombre, clave)][estado] += 1
         
-        # Incrementar el contador correspondiente al estado para la sala actual
-        cantidades_por_sala_estado[sala][estado] += 1
-      
+        # Incrementar el contador total de experiencias para la experiencia actual
+        total_por_experiencia[(nombre, clave)] += 1
+        
 
-    return cantidades_por_sala_estado
+    # Calcular el porcentaje de veces que cada experiencia estuvo en cada estado
+    porcentaje_por_experiencia = {}
+    for (nombre,clave), cantidades in cantidades_por_experiencia_estado.items():
+        porcentaje_por_estado = {}
+        total_experiencias = total_por_experiencia[(nombre,clave)]
+        
+        for estado, cantidad in cantidades.items():
+        # Calcular el porcentaje y redondearlo a un decimal
+            porcentaje = cantidad / total_experiencias * 100
+            porcentaje_redondeado = round(porcentaje, 1)
+            porcentaje_por_estado[estado] = porcentaje_redondeado
+        
+        porcentaje_por_experiencia[nombre] = porcentaje_por_estado
+        
+    """""
+    # Calcular el promedio del porcentaje de cada estado para todas las experiencias
+    promedio_porcentaje_estado = {}
+    total_experiencias = sum(total_por_experiencia.values())
+    
+    for estado in ('BUENA', 'REPARADA', 'DESHABILITADA'):
+        total_estado = sum(cantidades[estado] for cantidades in cantidades_por_experiencia_estado.values())
+        promedio = total_estado / total_experiencias * 100
+        promedio_con_decimales = round(promedio, 1)  # Redondear a un decimal
+        promedio_porcentaje_estado[estado] = promedio_con_decimales
+    """""
 
+    return porcentaje_por_experiencia
 
 @app.route('/mostrar_grafico', methods=['GET', 'POST'])
 def mostrarGrafico():
@@ -447,57 +484,53 @@ def mostrarGrafico():
             return render_template('InfGrafico.html')
 
         datos = request.json  # Obtener los datos enviados desde la página HTML
-
         tipo_seleccion = datos['tipoSeleccion']
         rango_fechas = datos['rangoFechas']
         fecha_inicial = rango_fechas['fechaInicial']
         fecha_final = rango_fechas['fechaFinal']
-        tipo_sala=datos['tipoSala']
+        tipo_sala = datos['tipoSala']
 
-        # Validar el tipo de selección (por año o por mes)
         if tipo_seleccion == 'años':
-            # Obtener el año inicial y final desde las fechas proporcionadas
-            #año_inicial = fecha_inicial[:4]
-            #año_final = fecha_final[:4]
-
-            # Obtener los datos para el gráfico desde la base de datos por año
             datos_cheklist = obtener_cheklist_dataG(fecha_inicial, fecha_final, tipo_sala)
         elif tipo_seleccion == 'meses':
-            # Obtener los datos para el gráfico desde la base de datos por mes
             datos_cheklist = obtener_cheklist_dataG(fecha_inicial, fecha_final, tipo_sala)
         else:
             return jsonify({'error': 'Tipo de selección no válido'})
 
         # Procesar los datos para obtener las cantidades de experiencias por sala y estado
         cantidades_por_sala_estado = procesar_datos_cheklist(datos_cheklist)
-        print(cantidades_por_sala_estado)
 
+        claves = list(cantidades_por_sala_estado.keys())
 
-        # Obtener las cantidades de experiencias buenas, reparadas y deshabilitadas por sala
-        buenas_por_sala = [cantidades_por_sala_estado[sala]['BUENA'] for sala in cantidades_por_sala_estado]#revisar como salen los datos 
-        reparadas_por_sala = [cantidades_por_sala_estado[sala]['REPARADA'] for sala in cantidades_por_sala_estado]
-        deshabilitadas_por_sala = [cantidades_por_sala_estado[sala]['DESHABILITADA'] for sala in cantidades_por_sala_estado]
+        # Obtener las cantidades de experiencias buenas, reparadas y deshabilitadas por experiencia
+        estados = {
+            'BUENA': [cantidades_por_sala_estado[nombre]['BUENA'] for nombre in cantidades_por_sala_estado],
+            'REPARADA': [cantidades_por_sala_estado[nombre]['REPARADA'] for nombre in cantidades_por_sala_estado], 
+            'DESHABILITADA': [cantidades_por_sala_estado[nombre]['DESHABILITADA'] for nombre in cantidades_por_sala_estado]
+        }
 
-        # Crear una nueva figura y ejes
-        fig, ax = plt.subplots(figsize=(12, 6))
+        x = np.arange(len(claves))
+        width = 0.20 # Ancho de cada barra
 
-        # Barra para experiencias buenas
-        ax.bar(cantidades_por_sala_estado.keys(), buenas_por_sala, color='green', label='BUENAS')
-        # Barra para experiencias reparadas
-        ax.bar(cantidades_por_sala_estado.keys(), reparadas_por_sala, bottom=buenas_por_sala, color='blue', label='REPARADAS')
-        # Barra para experiencias deshabilitadas
-        ax.bar(cantidades_por_sala_estado.keys(), deshabilitadas_por_sala, bottom=[buenas + reparadas for buenas, reparadas in zip(buenas_por_sala, reparadas_por_sala)], color='red', label='DESHABILITADAS')
+        fig, ax = plt.subplots(figsize=(30, 8))  # Tamaño ampliado del gráfico
 
-        ax.set_xlabel('Sala')
+        for i, (attribute, measurement) in enumerate(estados.items()):
+            color = 'green' if attribute == 'BUENA' else ('orange' if attribute == 'REPARADA' else 'red')
+            offset = width * i
+            rects = ax.bar(x + offset, measurement, width, label=attribute, color=color)
+            ax.bar_label(rects, padding=3)
+
+        # Configuraciones adicionales del gráfico
         ax.set_ylabel('Cantidad')
-        ax.set_title('Experiencias por Sala y Estado')
-        ax.legend()
-
-        ax.set_xticks(range(len(cantidades_por_sala_estado.keys())))
-        ax.set_xticklabels(cantidades_por_sala_estado.keys(), rotation=20, ha='right')
+        ax.set_title('Cantidad de Experiencias por Estado')
+        ax.set_xticks(x + width / 2)
+        ax.set_xticklabels(claves, rotation=35, ha='right')
+        ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+        ax.set_ylim(0, max([max(vals) for vals in estados.values()]) + 10)
 
         # Convertir el gráfico a imagen base64
         buffer = BytesIO()
+        plt.tight_layout()  # Ajusta el diseño del gráfico
         plt.savefig(buffer, format='png')
         buffer.seek(0)
         img_str = base64.b64encode(buffer.getvalue()).decode()
@@ -509,11 +542,11 @@ def mostrarGrafico():
         print(f"Error al mostrar el gráfico: {e}")
         return jsonify({'error': 'Error al procesar los datos para el gráfico: ' + str(e)})
 
-
+"""""
 # --------------------------------------------------------------------------------------------
 # Rutas para la segunda aplicación (home)
 # --------------------------------------------------------------------------------------------
-
+"""""
 #ruta para guardar informacion en la tabla experiencia
 @app.route('/CRUD', methods=['GET', 'POST'])
 def home1():
