@@ -69,7 +69,7 @@ def home():
      return "Error al procesar la solicitudd."
 
 
-#Ruta para guardar usuarios en la bdd del crud
+#Ruta para guardar experiencia en la bdd del crud
 @app.route('/user1', methods=['POST'])
 def addUser1():
     try:
@@ -512,7 +512,7 @@ def mostrarGrafico():
         x = np.arange(len(claves))
         width = 0.20 # Ancho de cada barra
 
-        fig, ax = plt.subplots(figsize=(30, 8))  # Tamaño ampliado del gráfico
+        fig, ax = plt.subplots(figsize=(30, 5))  # Tamaño ampliado del gráfico
 
         for i, (attribute, measurement) in enumerate(estados.items()):
             color = 'green' if attribute == 'BUENA' else ('orange' if attribute == 'REPARADA' else 'red')

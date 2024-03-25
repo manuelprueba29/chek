@@ -81,8 +81,7 @@
                             <th scope="col">Fecha</th>
                             <th scope="col">Estado</th>
                             <th scope="col">Comentario</th>
-                           <!-- <th scope="col">Edit</th>-->
-                           <!--  <th scope="col">Delete</th>-->
+                          
                         </tr>
                     </thead>
                     <form id="miFormularioTabla" action="{{ url_for('addUser') }}" method="POST">
@@ -93,6 +92,7 @@
                                         <td>{{ row[0] if row[0] is defined else '' }}</td>
                                         <td>{{ row[1] if row[1] is defined else '' }}</td>
                                         <td>{{ row[2] if row[2] is defined else '' }}</td>
+                                        
 
                                         <!-- Campos ocultos para almacenar valores -->
                                         <input type="hidden" name="Activo[]" value="{{ row[0] }}">
@@ -141,6 +141,16 @@
             // Establecer la fecha actual en el campo de fecha
             var currentDate = $.datepicker.formatDate('yy-mm-dd', new Date());
             $(".fecha-manual").val(currentDate);
+
+            // Detectar cambios en el primer campo de fecha
+            $('.fecha-manual:first').on('change', function() {
+             // Obtener el valor de la fecha modificada
+            var nuevaFecha = $(this).val();
+        
+            // Actualizar el valor de todos los campos de fecha
+            $('.fecha-manual').not(':first').val(nuevaFecha);
+            });
+            
 
             // Obtener el menú desplegable por su nombre
             var selectOpcion = $("select[name='opcion']");
