@@ -1,5 +1,0 @@
-editar informe
-modificar fecha, si se selecciona una fecha, el resto debe quedar con la misma fecha 
-hacer grafico que den informe del porcentaje de experiencias buenas, reparadas, deshabilitadas durante el mes, semestre y años. 
-Organizar las rutas que nos lleba al menu. No apuntar a la ip, si no al nombre del html 
-#eliminar la busqueda por el nombre de sala ya que no se esta utilizando debido a que nos importa que jale todo lo que esta en ese rango de fecha

@@ -237,16 +237,17 @@ def actualizar_estado():
         if request.method == 'POST':
             activo = request.form['activo']  # Obtener el identificador único del formulario
             nuevo_estado = request.form['estado']  # Obtener el nuevo estado del formulario
+            fecha_actual = request.form['fecha']  # Obtener la fecha actual del formulario
 
             with connection.cursor() as cursor:
                 # Actualizar el estado en la base de datos para la fila con el identificador único especificado
                 sql_update_estado = """
                     UPDATE cheklist
                     SET Estado = %s
-                    WHERE Activo = %s
+                    WHERE Activo = %s AND Fecha = %s
                 """
                 try:
-                    cursor.execute(sql_update_estado, (nuevo_estado, activo))
+                    cursor.execute(sql_update_estado, (nuevo_estado, activo, fecha_actual))
                     connection.commit()  # Hacer commit para guardar los cambios
                 except Exception as e:
                     connection.rollback()  # Hacer rollback en caso de error
