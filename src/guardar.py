@@ -394,6 +394,7 @@ def obtener_cheklist_dataG(fecha_inicial, fecha_final, tipo_sala):
             pass
 
         try:
+            #aquí se llama todos los datos y se extrae cada dato por filas si cumple el rango a continuacion
             cursor.execute(sql_cheklist, (fecha_inicial, fecha_final, tipo_sala,))        
             cheklist_dateG = cursor.fetchall()
           
@@ -429,7 +430,7 @@ def procesar_datos_cheklist(datos_cheklist):
     datos = request.json
     tipo_seleccion = datos['tipoSeleccion']
 
-    # Iterar sobre los datos de la checklist y contar las experiencias de cada tipo para cada sala
+    # Iterar sobre los datos de la tabla checklist y cuenta las experiencias de cada tipo para la sala seleccionada
     for dato in datos_cheklist:
         fecha=dato[2]#obtener fecha
         nombre = dato[3]  # Obtener nombre de la experiencia
@@ -442,18 +443,23 @@ def procesar_datos_cheklist(datos_cheklist):
             clave = fecha.strftime('%Y-%m')  # Formato: 'YYYY-MM'
             
         # Incrementar el contador correspondiente al estado para la experiencia actual
-
-        cantidades_por_experiencia_estado[(nombre, clave)][estado] += 1
+        #cantidades_por_experiencia_estado[(nombre, clave)][estado] += 1
+        #guarda por experiencia el diccionario con la cantidad de veces que estuvo Buena, Reparada, deshabilitada
+        cantidades_por_experiencia_estado[(nombre)][estado] += 1
         
         # Incrementar el contador total de experiencias para la experiencia actual
-        total_por_experiencia[(nombre, clave)] += 1
+        #Me cuenta la cantidad de reporte por experiencia, independiente si es buena, reparada o mala
+        #total_por_experiencia[(nombre, clave)] += 1
+        total_por_experiencia[(nombre)] += 1
         
 
     # Calcular el porcentaje de veces que cada experiencia estuvo en cada estado
     porcentaje_por_experiencia = {}
-    for (nombre,clave), cantidades in cantidades_por_experiencia_estado.items():
+    #for (nombre,clave), cantidades in cantidades_por_experiencia_estado.items():
+    for (nombre), cantidades in cantidades_por_experiencia_estado.items():
         porcentaje_por_estado = {}
-        total_experiencias = total_por_experiencia[(nombre,clave)]
+        #total_experiencias = total_por_experiencia[(nombre,clave)]
+        total_experiencias = total_por_experiencia[(nombre)]
         
         for estado, cantidad in cantidades.items():
         # Calcular el porcentaje y redondearlo a un decimal
@@ -634,4 +640,4 @@ def addUser():
         
     
 if __name__ == '__main__':
-    app.run(host='10.1.4.49', port=5000)
+    app.run(host='10.1.4.42', port=5000)
