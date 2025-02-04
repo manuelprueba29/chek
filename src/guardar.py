@@ -22,11 +22,10 @@ template_dir = os.path.join(template_dir, 'src', 'templates')
 app = Flask(__name__, template_folder = template_dir)
 app.secret_key = 'Chek!Q988'
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-
 # -------------------------------------------------------------------------------------------------------
 # Rutas para la primera aplicación (home1)
+#plotly
 # -------------------------------------------------------------------------------------------------------
-
 def obtener_conexion():
     return db.database
 
@@ -427,20 +426,22 @@ def procesar_datos_cheklist(datos_cheklist):
     # Inicializar un diccionario para almacenar las cantidades por experiencia y estado
     cantidades_por_experiencia_estado = defaultdict(lambda: {'BUENA': 0, 'REPARADA': 0, 'DESHABILITADA': 0})
     total_por_experiencia = defaultdict(int)
-    datos = request.json
-    tipo_seleccion = datos['tipoSeleccion']
+   # datos = request.json
+    #tipo_seleccion = datos['tipoSeleccion']
 
     # Iterar sobre los datos de la tabla checklist y cuenta las experiencias de cada tipo para la sala seleccionada
     for dato in datos_cheklist:
-        fecha=dato[2]#obtener fecha
+        #fecha=dato[2]#obtener fecha
         nombre = dato[3]  # Obtener nombre de la experiencia
         estado = dato[4]  # Obtener el estado
         
         # Obtener el año o el mes dependiendo del tipo de selección
+        """""
         if tipo_seleccion == 'años':
             clave = fecha.year
         elif tipo_seleccion == 'meses':
             clave = fecha.strftime('%Y-%m')  # Formato: 'YYYY-MM'
+        """""
             
         # Incrementar el contador correspondiente al estado para la experiencia actual
         #cantidades_por_experiencia_estado[(nombre, clave)][estado] += 1
